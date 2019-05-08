@@ -1,0 +1,10 @@
+fabric
+tox
+pytest
+requests
+ipython
+flask
+zappa
+pylint
+pydocstyle
+flask

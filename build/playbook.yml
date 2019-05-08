@@ -1,0 +1,90 @@
+
+---
+- hosts: localhost
+
+  vars:
+      go_tarball: go1.12.4.linux-amd64.tar.gz
+      go_download_location: "http://golang.org/dl/{{ go_tarball }}"
+      go_tarball_checksum: "d7d1f1f88ddfe55840712dc1747f37a790cbcaa448f6c9cf51bbe10aa65442f5"
+      go_version_target: "go version go1.12.4 linux/amd64"
+      vs_code_link: "https://code.visualstudio.com/docs/?dv=linux64_deb"
+      user_home_dir: "/home/kevincornally"
+
+  become: yes
+  become_method: sudo
+
+  tasks:
+
+    - name: Create base code directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      with_items:
+        - "{{ user_home_dir }}/go"
+        - "{{ user_home_dir }}/python"
+        - "{{ user_home_dir }}/webdev"
+      
+  
+    - name: Install base packages
+      apt: name={{ item }} state=installed
+      with_items:
+        - git
+        - supervisor
+        - python-pip
+        - virtualenv
+        - screen
+        - code
+        - screen  
+      register: base_install
+
+    - get_url: url={{ go_download_location }} dest=/usr/local/src/{{ go_tarball }} sha256sum={{ go_tarball_checksum }}
+
+    - name: Register the current Go version (if any)
+      command: /usr/local/go/bin/go version
+      ignore_errors: yes
+      register: go_version
+
+    - name: Extract the Go tarball if Go is not yet installed or if it is not the desired version
+      command: tar -C /usr/local -xf /usr/local/src/{{ go_tarball }}
+      when: go_version|failed or go_version.stdout != go_version_target
+
+    - name: Register GOBIN
+      command: export PATH=$PATH:/usr/local/go/bin
+      ignore_errors: yes
+      
+
+    - name: Instal base python packages
+      pip:
+        requirements: requirements.txt
+        chdir: /home/kevincornally/build
+      
+    - name: Backing up existing ~/.zshrc
+      shell: if [ -f ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.orig; fi
+      sudo: no
+
+    - name: Cloning  oh-my-zsh
+      git:
+        repo=https://github.com/robbyrussell/oh-my-zsh
+        dest=~/.oh-my-zsh
+      register: cloning
+      sudo: no
+
+    - name: Creating new ~/.zshrc
+      copy:
+        src=~/.oh-my-zsh/templates/zshrc.zsh-template
+        dest=~/.zshrc
+      when: cloning|success
+      sudo: no
+
+    - name: Install vscode packages
+      shell: code --install-extension {{ item }}
+      with_items:
+          ms-vscode.go
+          ms-python.python
+          coenraads.bracket-pair-colorizer
+          esbenp.prettier-vscode
+      when: base_install|success
+      sudo: no
+
+  
+
