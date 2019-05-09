@@ -26,6 +26,11 @@ cd Python-3.7.2
 sudo ./configure --enable-optimizations
 sudo make altinstall
 
+###################
+# Install Ansible for python3 #
+
+python3.7 -m pip install ansible
+
 
 #####################################
 # Display real installation process #
