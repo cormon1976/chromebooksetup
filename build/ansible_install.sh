@@ -16,6 +16,17 @@ else
     echo "Ansible already installed"
 fi
 
+###################
+# Install/Build python3.7 #
+
+wget https://www.python.org/ftp/python/3.7.2/Python-3.7.2.tgz
+
+tar xzf Python-3.7.2.tgz
+cd Python-3.7.2
+sudo ./configure --enable-optimizations
+sudo make altinstall
+
+
 #####################################
 # Display real installation process #
 echo ""
